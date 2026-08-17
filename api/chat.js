@@ -94,32 +94,34 @@ Do not guess. Do not invent rules. Do not substitute general annotation knowledg
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  if (!process.env.OPENAI_API_KEY) return res.status(500).json({ error: 'OPENAI_API_KEY is not configured in Vercel.' });
+  if (!process.env.GEMINI_API_KEY) return res.status(500).json({ error: 'GEMINI_API_KEY is not configured in Vercel.' });
 
   try {
     const { messages = [] } = req.body || {};
     const safeMessages = Array.isArray(messages) ? messages.slice(-12).map(m => ({
-      role: m.role === 'assistant' ? 'assistant' : 'user',
-      content: String(m.content || '').slice(0, 12000)
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: String(m.content || '').slice(0, 12000) }]
     })) : [];
 
-    const response = await fetch('https://api.openai.com/v1/responses', {
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+        'x-goog-api-key': process.env.GEMINI_API_KEY
       },
       body: JSON.stringify({
-        model: 'gpt-5.6-luna',
-        instructions: SOP + `\n\nWhen reviewing a caption, never claim you saw video frames unless the user actually supplied frames. If only text is supplied, judge only the wording and explicitly say that frame-level action/boundary verification requires the video. For verb questions, distinguish “explicitly listed in the supplied SOP” from “not found in the supplied SOP”. If the SOP is insufficient, say so.`,
-        input: safeMessages,
-        max_output_tokens: 900
+        systemInstruction: {
+          parts: [{ text: SOP + `\n\nWhen reviewing a caption, never claim you saw video frames unless the user actually supplied frames. If only text is supplied, judge only the wording and explicitly say that frame-level action/boundary verification requires the video. For verb questions, distinguish “explicitly listed in the supplied SOP” from “not found in the supplied SOP”. If the SOP is insufficient, say so.` }]
+        },
+        contents: safeMessages,
+        generationConfig: { maxOutputTokens: 900, temperature: 0.2 }
       })
     });
 
     const data = await response.json();
-    if (!response.ok) return res.status(response.status).json({ error: data?.error?.message || 'OpenAI request failed.' });
-    return res.status(200).json({ text: data.output_text || 'No response was returned.' });
+    if (!response.ok) return res.status(response.status).json({ error: data?.error?.message || 'Gemini request failed.' });
+    const text = data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || 'No response was returned.';
+    return res.status(200).json({ text });
   } catch (error) {
     return res.status(500).json({ error: error.message || 'Unexpected server error.' });
   }
