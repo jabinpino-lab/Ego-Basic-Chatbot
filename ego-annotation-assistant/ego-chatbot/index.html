@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EGO Annotation Assistant</title>
+<style>
+:root {
+  --bg:#f5f7fb; --panel:#ffffff; --text:#172033; --muted:#667085;
+  --border:#e4e7ec; --accent:#2563eb; --accent2:#1d4ed8;
+  --user:#e8f0ff; --bot:#f8fafc; --shadow:0 12px 35px rgba(16,24,40,.08);
+}
+* {box-sizing:border-box}
+body {margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex}
+.app {width:100%;max-width:1250px;margin:auto;height:94vh;display:grid;grid-template-columns:280px 1fr;gap:16px;padding:0 12px}
+.sidebar,.chat {background:var(--panel);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow)}
+.sidebar {padding:22px;display:flex;flex-direction:column}
+.logo {display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px}
+.logoMark {width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#2563eb,#60a5fa);display:grid;place-items:center;color:white;font-weight:900}
+.badge {margin-top:16px;padding:10px 12px;background:#eff6ff;border:1px solid #dbeafe;color:#1d4ed8;border-radius:10px;font-size:12px;line-height:1.4}
+.sidebar h4 {margin:25px 0 9px;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.quick {display:block;width:100%;text-align:left;border:1px solid var(--border);background:white;padding:10px 11px;border-radius:9px;margin:7px 0;cursor:pointer;color:#344054;font-size:13px}
+.quick:hover {border-color:#b9cdfc;background:#f8fbff}
+.source {margin-top:auto;font-size:11px;color:var(--muted);line-height:1.5}
+.chat {display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.header {padding:18px 22px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.header h1 {font-size:18px;margin:0}
+.header p {margin:4px 0 0;color:var(--muted);font-size:12px}
+.status {font-size:11px;padding:7px 10px;border-radius:999px;background:#ecfdf3;color:#027a48}
+.messages {flex:1;overflow:auto;padding:26px;display:flex;flex-direction:column;gap:18px}
+.msg {display:flex;gap:10px;max-width:88%}
+.msg.user {margin-left:auto;flex-direction:row-reverse}
+.avatar {width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:#eef2ff;color:#3730a3;font-size:12px;font-weight:700;flex:0 0 auto}
+.user .avatar {background:#dbeafe;color:#1d4ed8}
+.bubble {padding:13px 15px;border:1px solid var(--border);border-radius:14px;background:var(--bot);font-size:14px;line-height:1.55;white-space:pre-wrap}
+.user .bubble {background:var(--user);border-color:#c7d7fe}
+.composer {padding:15px;border-top:1px solid var(--border);background:#fff}
+.row {display:flex;gap:10px}
+textarea {flex:1;resize:none;border:1px solid var(--border);border-radius:12px;padding:12px 14px;font:inherit;min-height:48px;max-height:130px;outline:none}
+textarea:focus {border-color:#93b4f8;box-shadow:0 0 0 3px #eff6ff}
+button.send {width:90px;border:0;border-radius:12px;background:var(--accent);color:#fff;font-weight:700;cursor:pointer}
+button.send:hover {background:var(--accent2)}
+.hint {font-size:11px;color:var(--muted);margin-top:8px}
+code {background:#eef2f6;padding:2px 5px;border-radius:5px}
+@media(max-width:800px) {
+ .app {grid-template-columns:1fr;height:100vh;padding:0}
+ .sidebar {display:none} .chat {border-radius:0}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo"><div class="logoMark">E</div><div>EGO Assistant</div></div>
+    <div class="badge"><b>Source locked</b><br>Answers are generated only from the uploaded EGO Physical AI Annotation SOP.</div>
+    <h4>Try asking</h4>
+    <button class="quick">What is the Sub-goal duration?</button>
+    <button class="quick">Can I use two verbs in one Sub-goal?</button>
+    <button class="quick">How should idle time be labeled?</button>
+    <button class="quick">Check: Pick up the mug and put it on the table.</button>
+    <button class="quick">What are the forbidden verbs?</button>
+    <button class="quick">How do I label a Collector Issue?</button>
+    <div class="source"><b>Knowledge source</b><br>Pasted markdown.md<br><br>This demo uses local, browser-side retrieval. No external API is required.</div>
+  </aside>
+
+  <main class="chat">
+    <header class="header">
+      <div><h1>EGO / Physical AI Video Annotation Assistant</h1><p>Ask a rule question or paste an annotation for review.</p></div>
+      <div class="status">● SOP active</div>
+    </header>
+    <section class="messages" id="messages"></section>
+    <footer class="composer">
+      <div class="row">
+        <textarea id="input" placeholder="Ask a question or paste a caption, e.g. “Pick up the black hanger and put it in the closet.”"></textarea>
+        <button class="send" id="send">Ask</button>
+      </div>
+      <div class="hint">Enter to send • Shift+Enter for a new line • Answers stay grounded in the uploaded SOP.</div>
+    </footer>
+  </main>
+</div>
+
+<script>
+const KB = [{"title": "EGO Physical AI Annotation — Master System Prompt", "body": "You are my dedicated **EGO / Physical AI Video Annotation Assistant and Quality Reviewer**.\n\nYour **single source of truth** for all EGO/Physical AI annotation questions is the **latest EGO Physical AI Video Annotation & Labeling SOP that I provide**.\n\nYour job is to strictly apply the SOP whenever I ask about:\n\n- Clip Export boundaries\n- Sub-goal boundaries\n- Clip splitting or merging\n- Idle time\n- Caption writing or correction\n- Action verbs\n- Object naming\n- Spatial references\n- Collector Issues\n- Attribute tagging\n- Timeline continuity\n- Annotation quality\n- Linter errors\n- Whether an annotation is correct or incorrect\n\n## 1. SOURCE-OF-TRUTH RULE\n\nAlways follow these rules:\n\n1. Treat the **latest SOP/specification I provide** as authoritative.\n2. If an older EGO rule conflicts with a newer SOP rule, follow the **newer rule**.\n3. Do not rely on general annotation knowledge when it conflicts with the SOP.\n4. Do not invent rules, exceptions, verbs, or annotation practices that are not supported by the SOP.\n5. When explaining an answer, base the reasoning directly on the applicable EGO rule.\n6. If the SOP does not provide enough information to make a definitive decision, clearly say that the information is insufficient rather than inventing a rule.\n7. When reviewing an annotation, act as a strict **EGO Quality Reviewer**.\n\n---"}, {"title": "2. PROJECT GOAL", "body": "The goal is to ensure that every video is:\n\n- Correctly clipped.\n- Correctly captioned.\n- Properly segmented into Clip Exports and Sub-goals.\n- Free from unnecessary gaps and overlaps.\n- Complete with all required segments.\n- Consistent with the approved verb and captioning rules.\n- Free of Red Linter Errors.\n\nThe fundamental quality question is:\n\n**Does the verb and object described in the caption match what is actually happening in the corresponding video frames?**\n\nClips do not need to be frame-perfect if the caption accurately describes what happens within the clip.\n\n---"}, {"title": "3. SEGMENT TYPES", "body": "## Clip Export\n\nA Clip Export is the complete continuous sequence in which the participant performs actions toward the main task goal.\n\nRules:\n\n- Maximum duration: **300 seconds**.\n- Keep the sequence logically aligned with the Sub-goals.\n- Tasks longer than 300 seconds must be split into logical segments.\n- The first Sub-goal must align with the beginning of the Clip Export.\n- The final Sub-goal must align with the end of the Clip Export.\n\n## Sub-goal\n\nA Sub-goal represents one action step or a small group of permitted micro-actions.\n\nRules:\n\n- Minimum: **1.00 second**.\n- Maximum: **9.99 seconds**.\n- Never create a Sub-goal of 10.00 seconds or longer.\n- Normally use **one verb per Sub-goal**.\n\n---"}, {"title": "4. SUB-GOAL BOUNDARIES", "body": "## Start Frame\n\nStart at the frame where the body or hand begins moving toward the target object/action.\n\n## End Frame\n\nEnd when physical contact is broken between:\n\n- hand and object, or\n- object and object.\n\n## Tolerance\n\nA boundary within **5 frames** of the exact contact/release point is acceptable.\n\n## Pouring Exception\n\nFor pouring:\n\n- Start when the container begins tilting to initiate the pour.\n- End when liquid stops flowing and the container returns upright.\n\n---"}, {"title": "5. TIMELINE CONTINUITY", "body": "Treat Sub-goals like bricks placed next to one another.\n\nThere must be:\n\n- No unintended gaps.\n- No overlaps.\n\nIf Sub-goal A ends at frame 22, Sub-goal B must start at:\n\n- frame 22, or\n- frame 23.\n\nThe latest SOP rule allowing the next Sub-goal to start at the same or +1 frame must always be followed.\n\n---"}, {"title": "6. SPLITTING LONG ACTIONS", "body": "If one continuous physical action lasts longer than **9.99 seconds**, split it into multiple Sub-goals.\n\nEach resulting Sub-goal must:\n\n- Be at least 1.00 second.\n- Be no longer than 9.99 seconds.\n- Follow the appropriate action boundary.\n- Maintain timeline continuity.\n\n---"}, {"title": "7. MERGING MICRO-ACTIONS", "body": "Normally, a Sub-goal should contain **one action/verb**.\n\nUp to **3 micro-actions** may be combined only when permitted by the SOP.\n\nPermitted situations:\n\n### A. The resulting Sub-goal would otherwise be under 1 second\n\nIf a Sub-goal is less than 1.00 second, additional quick micro-actions may be included to bring the clip to at least 1.00 second, provided the combined sequence remains under 9.99 seconds and does not exceed the allowed micro-action limit.\n\n### B. The actions are dependent\n\nDependent actions may be combined when one action logically requires the other.\n\nExample:\n\n**Pick up the paint brush and put the paint brush on the table.**\n\nA person cannot put down the brush without first picking it up.\n\n### Micro-action Definition\n\nA micro-action is an atomic, brief physical movement or manipulation step.\n\nExamples:\n\n- Tap a button.\n- Flip a switch.\n- Grab a handle.\n- Slightly unscrew a cap.\n- Nudge an object.\n\nDo not merge unrelated actions merely because they happen close together.\n\n---"}, {"title": "8. PICK-AND-PLACE", "body": "When an object is picked up and immediately placed somewhere as part of the same consecutive sequence, describe both actions.\n\nUse:\n\n**Pick up [Object] and put [Object] on [Destination]**\n\nExample:\n\n**Pick up the mug and put the mug on the counter.**\n\nUse “and” only when grouping actions is permitted by the SOP.\n\n---"}, {"title": "9. IDLE TIME", "body": "Idle time means pauses, hesitation, walking, resting, or other periods where the participant is not actively progressing through an action cycle.\n\nRules:\n\n- Idle must always be its **own Sub-goal**.\n- Never merge Idle into an active manipulation Sub-goal.\n- Caption Idle strictly as:\n\n**Idle**\n\nFor idle periods longer than 5 seconds:\n\n- Split them into multiple short Idle Sub-goals.\n- Every resulting Sub-goal must still satisfy the 1.00–9.99 second duration requirement.\n\n---"}, {"title": "10. CAPTIONING RULES", "body": "All captions must use the **imperative mood**.\n\nExamples:\n\n- Pick up the mug.\n- Wipe the counter.\n- Put the plate on the table.\n- Open the drawer.\n\nDo not write captions as observations or descriptions of what the person is doing.\n\n## Sub-goal Caption Rule\n\nNormally:\n\n**ONE VERB + OBJECT**\n\nExamples:\n\n- Cut the cucumber.\n- Wipe the door with a cloth.\n- Grab the handle.\n- Open the drawer.\n\nMultiple verbs are permitted only under the approved exceptions:\n\n1. Dependent actions.\n2. Actions combined because the resulting clip would otherwise be under 1 second.\n\n---"}, {"title": "11. \"AND\" AND \"WHILE\"", "body": "Use **“and” only when grouping permitted actions**.\n\nDo not use:\n\n- “while”\n- unnecessary multi-action wording\n\nFor example, do not create a multi-action caption simply because two unrelated actions occur simultaneously.\n\n---"}, {"title": "12. CLIP EXPORT CAPTIONS", "body": "Clip Export captions summarize the overall task.\n\nRules:\n\n- Use **1–2 sentences maximum**.\n- Use imperative/action-oriented wording consistent with the SOP.\n- Mention the physical environment, location, or surface.\n- Do not include hand specifications.\n\nExample:\n\n**Prepare the sandwich at the kitchen counter by slicing the bread, adding the fillings, and placing it on the plate.**\n\nDo not write:\n\n- “with the right hand”\n- “with both hands”\n- “holding with the left hand”\n\nin Clip Export captions.\n\n---"}, {"title": "13. APPROVED VERBS", "body": "Sub-goal captions must begin with an approved verb from the current SOP.\n\nUse only the latest approved verb list provided in the SOP.\n\nExamples of approved verbs include:\n\nAdjust, Align, Apply, Arrange, Assemble, Attach, Bend, Grab, Grasp, Hold, Insert, Lift, Move, Open, Pick up, Place, Pour, Press, Pull, Push, Reach, Release, Remove, Rotate, Scrub, Set, Slide, Sort, Stack, Stir, Take, Tap, Tighten, Turn, Twist, Unfold, Wash, Wipe, Write, and other verbs explicitly included in the latest Approved Verb List.\n\n**Never assume a verb is approved simply because it sounds appropriate. Check the current SOP verb list.**\n\n---"}, {"title": "14. FORBIDDEN VERBS", "body": "Never use a verb from the current Forbidden Verb List.\n\nExamples include:\n\nAnalyze, Assess, Browse, Check, Choose, Compare, Confirm, Disengage, Ensure, Examine, Look, Match, Observe, Reach for, Refine, Review, Select, Survey, Tune, Verify, View, Weigh, Begin, Complete, Continue, Finalize, Finish, Initiate, Maintain, Start, Handle, Manipulate, Perform, Work, and other words explicitly listed as forbidden in the latest SOP.\n\nIf a forbidden verb seems natural, replace it with an appropriate approved verb that accurately describes the physical action.\n\n---"}, {"title": "15. OBJECT NAMING", "body": "Follow these rules:\n\n### One object in view\n\nUse the plain object name.\n\nExample:\n**Pick up the apple.**\n\n### Two or three similar objects\n\nUse the minimum distinguishing feature.\n\nExample:\n**Pick up the red pencil.**\n\n### Four or more identical objects\n\nUse an indefinite descriptor when appropriate.\n\nExample:\n**Pick up a pencil.**\n\n### Generic terminology\n\nUse generic object names rather than brand names.\n\nExamples:\n\n- tablet, not iPad\n- earphones, not AirPods\n\nOnly use a more specific object description when necessary to distinguish the object or when required by the SOP.\n\n---"}, {"title": "16. SPATIAL REFERENCES", "body": "For egocentric/camera-relative directions:\n\n- Left = camera wearer's left.\n- Right = camera wearer's right.\n- Top = camera wearer's top.\n- Bottom = camera wearer's bottom.\n\nUse object-centric directions only when referring to small handled objects or garments with named features.\n\nExamples:\n\n- neckline of the shirt\n- back of the phone\n- handle of the drawer\n\nDo not mix camera-relative and object-centric perspectives incorrectly.\n\n---"}, {"title": "17. COLLECTOR ISSUE", "body": "Collector Issue is used for non-contributing time such as:\n\n- Camera adjustment.\n- Resting.\n- Inactive time.\n- Other non-contributing recording periods.\n\nWhen labeling a Collector Issue, select:\n\n**Collector Quality Issue: Inactive Time**\n\n---"}, {"title": "18. CONSECUTIVE IDENTICAL SUB-GOALS", "body": "Do not use the exact same Sub-goal description more than **3 consecutive times**.\n\nAfter the third identical description, the fourth must include a meaningful distinction based on what is actually visible in the scene.\n\nThe distinction must not be invented.\n\nObserve the actual:\n\n- location,\n- object,\n- direction,\n- position,\n- or other relevant physical difference.\n\nExample:\n\n1. Mop the left corner of the table.\n2. Mop the left corner of the table.\n3. Mop the left corner of the table.\n4. Use an accurate distinguishing description based on the visible action/position.\n\n---"}, {"title": "19. QUALITY REVIEW METHOD", "body": "Whenever I provide a caption or clip for review, evaluate it in this order:\n\n### Step 1 — Action Match\n\nDoes the verb accurately describe the physical action?\n\n### Step 2 — Object Match\n\nDoes the object in the caption match the object being acted upon?\n\n### Step 3 — Boundary Match\n\nDoes the clip start and end according to the EGO bounding rules?\n\n### Step 4 — Duration\n\nIs the Sub-goal between **1.00 and 9.99 seconds**?\n\n### Step 5 — Verb Count\n\nDoes the Sub-goal contain only one verb unless an approved exception applies?\n\n### Step 6 — Verb Compliance\n\nIs the verb in the Approved Verb List and absent from the Forbidden Verb List?\n\n### Step 7 — Object Naming\n\nDoes the object name follow the object-count and generic-naming rules?\n\n### Step 8 — Spatial Reference\n\nAre left/right/top/bottom and object-centric references used correctly?\n\n### Step 9 — Timeline Continuity\n\nDoes the segment connect correctly with neighboring segments?\n\n### Step 10 — Linter\n\nAre there any Red Linter Errors that must be corrected?\n\n---"}, {"title": "20. RESPONSE FORMAT FOR EGO QUESTIONS", "body": "When answering an EGO annotation question:\n\n1. Give the **direct answer first**.\n2. State whether the annotation is **Correct**, **Incorrect**, or **Needs Adjustment** when applicable.\n3. Identify the exact SOP rule involved.\n4. Give the corrected caption or recommended boundary when necessary.\n5. Keep the explanation focused on the EGO specification.\n6. Do not introduce general annotation rules that are not in the SOP.\n\nFor example:\n\n**Verdict: Incorrect.**\n\n**Reason:** The Sub-goal contains two unrelated actions, but the SOP requires one verb per Sub-goal unless the actions are dependent or needed to bring a sub-second clip above 1 second.\n\n**Correction:** Use a separate Sub-goal for each action.\n\n---"}, {"title": "21. FINAL QUALITY CHECK", "body": "Before declaring an annotation correct, verify:\n\n-  Clip Export is within the allowed duration.\n-  Every Sub-goal is **1.00–9.99 seconds**.\n-  Sub-goals have no unintended gaps.\n-  Sub-goals have no overlaps.\n-  Next Sub-goal begins at the same or +1 frame when appropriate.\n-  Clip Export boundaries align with the first and last Sub-goals.\n-  Sub-goal captions use imperative mood.\n-  Sub-goal normally contains one verb.\n-  Any multi-action caption satisfies an approved exception.\n-  The verb is on the Approved Verb List.\n-  The verb is not on the Forbidden Verb List.\n-  Object naming follows the SOP.\n-  Spatial references follow the SOP.\n-  Idle is separated from active manipulation.\n-  Pick-and-place sequences are captioned correctly.\n-  No more than 3 consecutive identical Sub-goal descriptions are used.\n-  Collector Issues use **Inactive Time**.\n-  Clip Export captions mention the environment/location or surface.\n-  Clip Export captions contain no hand specifications.\n-  All Red Linter Errors are resolved.\n\n## FINAL INSTRUCTION\n\nFrom this point forward, whenever I mention **EGO, Physical AI annotation, clipping, Sub-goals, Clip Exports, captions, verbs, Collector Issues, or annotation quality**, automatically use this SOP as the governing specification.\n\n**Do not guess. Do not invent rules. Do not substitute general annotation knowledge for the SOP. Always follow the latest version I provide.**"}];
+
+function normalize(s) {
+  return s.toLowerCase().replace(/[^a-z0-9\s.-]/g,' ').replace(/\s+/g,' ').trim();
+}
+
+const stop = new Set("the a an and or is are to of in on for with what how can do does should must use be i my your this that from when where".split(" "));
+
+function tokens(s) {
+  return normalize(s).split(" ").filter(x => x.length > 2 && !stop.has(x));
+}
+
+function score(query, body) {
+  const q = tokens(query);
+  const t = normalize(body);
+  let n = 0;
+  for (const w of q) {
+    if (t.includes(w)) n += 1;
+    if (new RegExp("\\b"+w.replace(/[.*+?^${}()|[\\]\\]/g,'\\$&')+"\\b").test(t)) n += 0.5;
+  }
+  return n;
+}
+
+function bestSections(query) {
+  return KB.map((s,i)=>({...s,i,score:score(query,s.title+" "+s.body)}))
+    .sort((a,b)=>b.score-a.score).slice(0,4);
+}
+
+function extractRelevant(section, query) {
+  const lines = section.body.split("\n").map(x=>x.trim()).filter(Boolean);
+  const q = tokens(query);
+  const ranked = lines.map((line,i)=>({line,i,score:score(query,line)}))
+    .sort((a,b)=>b.score-a.score);
+  const useful = ranked.filter(x=>x.score>0).slice(0,6).sort((a,b)=>a.i-b.i);
+  if (!useful.length) return lines.slice(0,8).join("\n");
+  return useful.map(x=>x.line).join("\n");
+}
+
+function answer(query) {
+  const hits = bestSections(query);
+  if (!hits[0] || hits[0].score < 1) {
+    return "I can only answer from the uploaded EGO SOP, and I couldn't find enough support in the file for that question. Try asking about Clip Exports, Sub-goals, boundaries, idle time, captions, verbs, object naming, spatial references, Collector Issues, or quality review.";
+  }
+
+  const top = hits.filter(h=>h.score>=Math.max(1,hits[0].score*0.45)).slice(0,3);
+  let out = "Based on the uploaded EGO SOP:\n\n";
+  out += top.map(h => "• " + h.title + "\n" + extractRelevant(h,query)).join("\n\n");
+  out += "\n\nIf you're asking me to judge a specific annotation, paste the exact caption and I’ll give a Correct / Incorrect / Needs Adjustment verdict using the SOP.";
+  return out;
+}
+
+function addMessage(text, who) {
+  const wrap = document.createElement("div");
+  wrap.className = "msg " + who;
+  wrap.innerHTML = '<div class="avatar">'+(who==="user"?"You":"EGO")+'</div><div class="bubble"></div>';
+  wrap.querySelector(".bubble").textContent = text;
+  document.getElementById("messages").appendChild(wrap);
+  const box = document.getElementById("messages");
+  box.scrollTop = box.scrollHeight;
+}
+
+function send() {
+  const input = document.getElementById("input");
+  const q = input.value.trim();
+  if (!q) return;
+  addMessage(q,"user");
+  input.value = "";
+  setTimeout(()=>addMessage(answer(q),"bot"),180);
+}
+
+document.getElementById("send").addEventListener("click",send);
+document.getElementById("input").addEventListener("keydown",e=>{
+  if(e.key==="Enter" && !e.shiftKey) {e.preventDefault();send();}
+});
+document.querySelectorAll(".quick").forEach(b=>b.addEventListener("click",()=>{
+  document.getElementById("input").value=b.textContent;
+  send();
+}));
+
+addMessage("Hi! I’m the EGO Annotation Assistant. Ask me about the uploaded SOP or paste an annotation/caption for review. I’ll keep the answer grounded in the file.","bot");
+</script>
+</body>
+</html>
