@@ -1,77 +1,688 @@
-const SOP = `EGO Physical AI Annotation — Master System Prompt
+const EGO_SYSTEM_PROMPT = `
+You are the EGO / Physical AI Annotation Assistant and Quality Reviewer.
 
-You are the EGO / Physical AI Video Annotation Assistant and Quality Reviewer. The latest EGO Physical AI Annotation SOP supplied by the user is the single source of truth.
+IMPORTANT:
+The latest EGO Physical AI Video Annotation & Labeling SOP provided by the user is the single source of truth.
 
-SOURCE OF TRUTH: follow the latest SOP; newer rules override older ones; never invent rules; if insufficient information, say so.
+Never invent EGO rules.
+If the SOP does not provide enough information, say that the information is insufficient.
 
-PROJECT: Every video must be correctly clipped/captioned, properly segmented, free of unintended gaps/overlaps, complete, consistent with approved verbs, and free of Red Linter Errors. Fundamental question: does the verb/object match what happens in the frames?
+PROJECT GOAL:
+Ensure every video is correctly clipped, correctly captioned, properly segmented, complete, and free of unintended gaps, overlaps, and Red Linter Errors.
 
-CLIP EXPORT: complete continuous sequence toward the main task goal; maximum 300 seconds; split longer tasks logically; first and last Sub-goals align with Clip Export bounds.
+SUB-GOAL RULES:
+- Minimum duration: 1.00 second.
+- Maximum duration: 9.99 seconds.
+- Normally use one verb per Sub-goal.
+- Never create a Sub-goal of 10.00 seconds or longer.
+- Multiple actions are allowed only under approved SOP exceptions.
 
-SUB-GOAL: one action step or permitted small group; 1.00–9.99 seconds; never 10.00+; normally one verb.
+CLIP EXPORT:
+- Maximum duration: 300 seconds / 5 minutes / 4:59.
+- Longer tasks must be split logically.
+- First Sub-goal aligns with the beginning of the Clip Export.
+- Final Sub-goal aligns with the end of the Clip Export.
 
-BOUNDARIES: start where body/hand begins moving toward target; end when physical contact breaks between hand/object or object/object; within 5 frames of exact point is acceptable. Pouring starts when container tilts and ends when liquid stops and container returns upright.
+SUB-GOAL BOUNDARIES:
+- Start when the body or hand begins moving toward the target object/action.
+- End when physical contact is broken between hand/object or object/object.
+- A boundary within 5 frames of the exact contact/release point is acceptable.
 
-TIMELINE: no unintended gaps or overlaps. If A ends at frame 22, B starts at frame 22 or 23.
+POURING:
+- Start when the container begins tilting to initiate the pour.
+- End when liquid stops flowing and the container returns upright.
 
-LONG ACTIONS: continuous action over 9.99 seconds must be split into 1.00–9.99 second Sub-goals with continuity.
+TIMELINE:
+- No unintended gaps.
+- No unintended overlaps.
+- If one Sub-goal ends at frame 22, the next starts at frame 22 or 23.
 
-MICRO-ACTIONS: up to 3 may be combined only when the result would otherwise be under 1 second or actions are dependent. Do not merge unrelated actions.
+IDLE:
+- Idle must be its own Sub-goal.
+- Caption exactly: Idle.
+- Do not merge Idle with active manipulation.
+- Idle periods longer than 5 seconds should be split into multiple valid Sub-goals.
 
-PICK-AND-PLACE: when picked up and immediately placed as one permitted sequence, use “Pick up [Object] and put [Object] on [Destination]”.
+CAPTIONING:
+Use imperative/action-oriented wording.
 
-IDLE: own Sub-goal, caption exactly “Idle”; never merge with manipulation. Idle over 5 seconds is split into multiple 1.00–9.99 second Idle Sub-goals.
+Examples:
+- Pick up the mug.
+- Wipe the counter.
+- Put the plate on the table.
 
-CAPTIONS: imperative mood. Normally ONE VERB + OBJECT. Multiple verbs only for dependent actions or permitted sub-second grouping. Use “and” only when grouping is permitted; do not use “while” unnecessarily.
+Normally use one verb per Sub-goal.
 
-CLIP EXPORT CAPTIONS: 1–2 sentences, imperative/action-oriented, mention environment/location/surface, and never include hand specifications.
+Use "and" only for actions permitted to be combined by the SOP.
 
-APPROVED VERBS explicitly supplied include: Adjust, Align, Apply, Arrange, Assemble, Attach, Bend, Grab, Grasp, Hold, Insert, Lift, Move, Open, Pick up, Place, Pour, Press, Pull, Push, Reach, Release, Remove, Rotate, Scrub, Set, Slide, Sort, Stack, Stir, Take, Tap, Tighten, Turn, Twist, Unfold, Wash, Wipe, Write. Use only the current SOP list; do not assume a verb is approved merely because it sounds appropriate.
+PICK-AND-PLACE:
+When permitted:
+Pick up [Object] and put [Object] on [Destination].
 
-FORBIDDEN VERBS explicitly supplied include: Analyze, Assess, Browse, Check, Choose, Compare, Confirm, Disengage, Ensure, Examine, Look, Match, Observe, Reach for, Refine, Review, Select, Survey, Tune, Verify, View, Weigh, Begin, Complete, Continue, Finalize, Finish, Initiate, Maintain, Start, Handle, Manipulate, Perform, Work. Never use a verb from the current Forbidden Verb List.
+OBJECT NAMING:
+Use the minimum necessary distinguishing information.
+Prefer generic object names instead of brand names.
 
-OBJECT NAMING: one object = plain name; 2–3 similar = minimum distinguishing feature; 4+ identical = indefinite descriptor when appropriate; prefer generic names over brands.
+SPATIAL REFERENCES:
+Left/right/top/bottom refer to the camera wearer's perspective.
+Use object-centric references only when appropriate for handled objects or garments.
 
-SPATIAL: camera-relative left/right/top/bottom means camera wearer's perspective. Object-centric directions may be used for small handled objects/garments with named features.
+COLLECTOR ISSUE:
+Use:
+Collector Quality Issue: Inactive Time
 
-COLLECTOR ISSUE: camera adjustment, resting, inactive/non-contributing recording. Label “Collector Quality Issue: Inactive Time”.
+CONSECUTIVE IDENTICAL SUB-GOALS:
+Do not use the exact same Sub-goal description more than 3 consecutive times.
+The fourth must contain a meaningful distinction that is actually visible.
 
-CONSECUTIVE IDENTICAL SUB-GOALS: do not use exact same description more than 3 times consecutively; fourth needs a real visible distinction, never invented.
+QUALITY REVIEW:
+Check:
+1. Action match
+2. Object match
+3. Boundary match
+4. Duration
+5. Verb count
+6. Approved/forbidden verb compliance
+7. Object naming
+8. Spatial references
+9. Timeline continuity
+10. Linter errors
 
-REVIEW ORDER: action match, object match, boundary, duration, verb count, verb compliance, object naming, spatial reference, timeline, linter.
+RESPONSE FORMAT:
+Give the direct answer first.
 
-When an image is supplied, inspect the visible action and objects carefully. Give the most accurate EGO-compliant action description supported by the image. Do not claim frame-level timing/boundaries from a single screenshot. If the screenshot is ambiguous, say what is visible and what cannot be determined. Distinguish clearly between what is visibly happening and what the SOP allows as a caption. For verb questions, distinguish explicitly listed approved/forbidden verbs from verbs not found in the supplied list.
+When reviewing an annotation:
 
-Response format: direct answer first; then Correct/Incorrect/Needs Adjustment when reviewing; then SOP rule; then corrected caption/recommendation when needed. Do not guess.`;
+Verdict: Correct / Incorrect / Needs Adjustment
+
+Reason:
+[Explain the applicable EGO rule.]
+
+Correction:
+[Give the corrected caption or boundary when necessary.]
+
+IMAGE / SCREENSHOT ANALYSIS:
+When an image is provided:
+- Identify the physical action actually visible.
+- Recommend an EGO-compliant caption.
+- Check the verb.
+- Check the object name.
+- Explain uncertainty if the image is ambiguous.
+- Never invent an action that cannot be supported by the image.
+- A screenshot cannot reliably establish exact start/end frames.
+- A screenshot cannot reliably establish exact duration.
+
+APPROVED AND FORBIDDEN VERBS:
+Use ONLY the latest approved/forbidden verb lists supplied by the current EGO SOP.
+Do not assume a verb is approved simply because it sounds natural.
+
+When a user asks whether a verb is approved or forbidden, clearly state the result and explain the applicable SOP rule.
+
+Be concise, practical, and strict.
+`;
+
+
+// ---------------------------------------------------------
+// LOCAL EGO RULES
+// These answers do not consume an AI request.
+// ---------------------------------------------------------
+
+function localEgoAnswer(question) {
+  const q = String(question || "").toLowerCase().trim();
+
+  if (
+    q.includes("sub-goal duration") ||
+    q.includes("subgoal duration") ||
+    q.includes("sub-goal maximum") ||
+    q.includes("subgoal maximum") ||
+    q.includes("how long can a sub-goal")
+  ) {
+    return `**Answer:** A Sub-goal must be **1.00–9.99 seconds**.
+
+A Sub-goal must never be 10.00 seconds or longer.`;
+  }
+
+  if (
+    q.includes("clip export") &&
+    (
+      q.includes("maximum") ||
+      q.includes("max") ||
+      q.includes("duration") ||
+      q.includes("how long")
+    )
+  ) {
+    return `**Answer:** A Clip Export has a maximum duration of **300 seconds (5 minutes / 4:59)**.
+
+If the task is longer than 300 seconds, it must be split into logical segments.`;
+  }
+
+  if (
+    q.includes("collector issue") ||
+    q.includes("collector quality issue")
+  ) {
+    return `**Answer:** Use:
+
+**Collector Quality Issue: Inactive Time**
+
+This applies to non-contributing time such as camera adjustment, resting, or inactive recording periods.`;
+  }
+
+  if (
+    q.includes("idle") &&
+    (
+      q.includes("caption") ||
+      q.includes("label") ||
+      q.includes("how should") ||
+      q.includes("how do")
+    )
+  ) {
+    return `**Answer:** Idle must be its own Sub-goal.
+
+**Caption:** \`Idle\`
+
+Do not merge Idle with an active manipulation Sub-goal.`;
+  }
+
+  if (
+    q.includes("timeline continuity") ||
+    q.includes("timeline gap") ||
+    q.includes("timeline overlap")
+  ) {
+    return `**Answer:** Sub-goals should have no unintended gaps or overlaps.
+
+If Sub-goal A ends at frame 22, Sub-goal B should start at frame 22 or frame 23.`;
+  }
+
+  if (
+    q.includes("screenshot") &&
+    (
+      q.includes("duration") ||
+      q.includes("frame") ||
+      q.includes("boundary")
+    )
+  ) {
+    return `**Answer:** A screenshot can help identify the visible action, but it cannot reliably establish exact Sub-goal start/end frames or duration.
+
+Use the video timeline for exact boundary and duration checks.`;
+  }
+
+  return null;
+}
+
+
+// ---------------------------------------------------------
+// HELPERS
+// ---------------------------------------------------------
+
+function extractText(data) {
+  return (
+    data?.choices?.[0]?.message?.content ||
+    data?.choices?.[0]?.text ||
+    ""
+  );
+}
+
+
+function containsImage(messages) {
+  return messages.some((message) => {
+    if (!Array.isArray(message?.content)) return false;
+
+    return message.content.some((part) => {
+      return (
+        part?.type === "image_url" ||
+        part?.type === "input_image"
+      );
+    });
+  });
+}
+
+
+function normalizeMessages(messages) {
+  return messages.map((message) => {
+    if (!Array.isArray(message.content)) {
+      return {
+        role: message.role,
+        content: message.content,
+      };
+    }
+
+    const content = message.content.map((part) => {
+
+      // Standard OpenAI/OpenRouter image format
+      if (part.type === "image_url") {
+        return {
+          type: "image_url",
+          image_url: part.image_url,
+        };
+      }
+
+      // Convert input_image to image_url
+      if (part.type === "input_image") {
+        return {
+          type: "image_url",
+          image_url: {
+            url: part.image_url || part.url,
+          },
+        };
+      }
+
+      if (
+        part.type === "text" ||
+        part.type === "input_text"
+      ) {
+        return {
+          type: "text",
+          text: part.text || "",
+        };
+      }
+
+      return part;
+    });
+
+    return {
+      role: message.role,
+      content,
+    };
+  });
+}
+
+
+// ---------------------------------------------------------
+// OPENROUTER
+// ---------------------------------------------------------
+
+async function callOpenRouter(messages) {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+
+  if (!apiKey) {
+    throw new Error("OPENROUTER_API_KEY is not configured.");
+  }
+
+  const normalizedMessages = normalizeMessages(messages);
+
+  const response = await fetch(
+    "https://openrouter.ai/api/v1/chat/completions",
+    {
+      method: "POST",
+
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+
+        "HTTP-Referer":
+          process.env.SITE_URL ||
+          "https://ego-chatbot-1.vercel.app",
+
+        "X-Title":
+          "EGO Physical AI Annotation Assistant",
+      },
+
+      body: JSON.stringify({
+        model: "openrouter/free",
+
+        messages: [
+          {
+            role: "system",
+            content: EGO_SYSTEM_PROMPT,
+          },
+          ...normalizedMessages,
+        ],
+
+        temperature: 0.2,
+
+        max_tokens: 1500,
+      }),
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data?.error?.message ||
+      `OpenRouter request failed (${response.status})`
+    );
+  }
+
+  const text = extractText(data);
+
+  if (!text) {
+    throw new Error(
+      "OpenRouter returned an empty response."
+    );
+  }
+
+  return text;
+}
+
+
+// ---------------------------------------------------------
+// GEMINI FALLBACK
+// ---------------------------------------------------------
+
+async function callGemini(messages) {
+  const apiKey = process.env.GEMINI_API_KEY;
+
+  if (!apiKey) {
+    throw new Error(
+      "GEMINI_API_KEY is not configured."
+    );
+  }
+
+  const contents = messages.map((message) => {
+    const parts = [];
+
+    if (Array.isArray(message.content)) {
+
+      for (const part of message.content) {
+
+        if (
+          part.type === "text" ||
+          part.type === "input_text"
+        ) {
+          parts.push({
+            text: part.text || "",
+          });
+        }
+
+        if (
+          part.type === "image_url" ||
+          part.type === "input_image"
+        ) {
+          const imageUrl =
+            part.image_url?.url ||
+            part.image_url ||
+            part.url ||
+            "";
+
+          const match = imageUrl.match(
+            /^data:(image\/[^;]+);base64,(.+)$/
+          );
+
+          if (match) {
+            parts.push({
+              inline_data: {
+                mime_type: match[1],
+                data: match[2],
+              },
+            });
+          }
+        }
+      }
+
+    } else if (
+      typeof message.content === "string"
+    ) {
+
+      parts.push({
+        text: message.content,
+      });
+    }
+
+    return {
+      role:
+        message.role === "assistant"
+          ? "model"
+          : "user",
+
+      parts,
+    };
+  });
+
+  const response = await fetch(
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=" +
+      encodeURIComponent(apiKey),
+
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+      },
+
+      body: JSON.stringify({
+        systemInstruction: {
+          parts: [
+            {
+              text: EGO_SYSTEM_PROMPT,
+            },
+          ],
+        },
+
+        contents,
+
+        generationConfig: {
+          temperature: 0.2,
+          maxOutputTokens: 1500,
+        },
+      }),
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data?.error?.message ||
+      `Gemini request failed (${response.status})`
+    );
+  }
+
+  const text =
+    data?.candidates?.[0]?.content?.parts
+      ?.map((part) => part.text || "")
+      .join("") || "";
+
+  if (!text) {
+    throw new Error(
+      "Gemini returned an empty response."
+    );
+  }
+
+  return text;
+}
+
+
+// ---------------------------------------------------------
+// MAIN API HANDLER
+// ---------------------------------------------------------
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  if (!process.env.GEMINI_API_KEY) return res.status(500).json({ error: 'GEMINI_API_KEY is not configured in Vercel.' });
-  try {
-    const { messages = [] } = req.body || {};
-    const safeMessages = Array.isArray(messages) ? messages.slice(-12).map(m => {
-      const parts = [{ text: String(m.content || '').slice(0, 12000) }];
-      if (m.image && typeof m.image === 'string') {
-        const match = m.image.match(/^data:(image\/(?:png|jpeg|jpg|webp));base64,(.+)$/);
-        if (match) parts.push({ inlineData: { mimeType: match[1] === 'image/jpg' ? 'image/jpeg' : match[1], data: match[2] } });
-      }
-      return { role: m.role === 'assistant' ? 'model' : 'user', parts };
-    }) : [];
 
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SOP }] },
-        contents: safeMessages,
-        generationConfig: { maxOutputTokens: 1000, temperature: 0.2 }
-      })
+  if (req.method !== "POST") {
+    return res.status(405).json({
+      error: "Method not allowed",
     });
-    const data = await response.json();
-    if (!response.ok) return res.status(response.status).json({ error: data?.error?.message || 'Gemini request failed.' });
-    const text = data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || 'No response was returned.';
-    return res.status(200).json({ text });
+  }
+
+  try {
+
+    const body = req.body || {};
+
+    const messages =
+      Array.isArray(body.messages)
+        ? body.messages
+        : [];
+
+    if (!messages.length) {
+      return res.status(400).json({
+        error: "No messages provided.",
+      });
+    }
+
+
+    // Find latest user message
+    const latestUserMessage =
+      [...messages]
+        .reverse()
+        .find(
+          (message) =>
+            message.role === "user"
+        );
+
+
+    let question = "";
+
+    if (latestUserMessage) {
+
+      if (
+        typeof latestUserMessage.content ===
+        "string"
+      ) {
+        question =
+          latestUserMessage.content;
+      }
+
+      if (
+        Array.isArray(
+          latestUserMessage.content
+        )
+      ) {
+        question =
+          latestUserMessage.content
+            .filter(
+              (part) =>
+                part.type === "text" ||
+                part.type === "input_text"
+            )
+            .map(
+              (part) =>
+                part.text || ""
+            )
+            .join(" ");
+      }
+    }
+
+
+    const hasImage =
+      containsImage(messages);
+
+
+    // -----------------------------------------------------
+    // FIRST: LOCAL RULE ENGINE
+    // -----------------------------------------------------
+
+    if (!hasImage) {
+
+      const localAnswer =
+        localEgoAnswer(question);
+
+      if (localAnswer) {
+
+        return res.status(200).json({
+          text: localAnswer,
+          provider: "local-ego-rules",
+        });
+      }
+    }
+
+
+    // -----------------------------------------------------
+    // SECOND: OPENROUTER
+    // -----------------------------------------------------
+
+    let openRouterError = null;
+
+    if (
+      process.env.OPENROUTER_API_KEY
+    ) {
+
+      try {
+
+        const answer =
+          await callOpenRouter(
+            messages
+          );
+
+        return res.status(200).json({
+          text: answer,
+          provider: "openrouter",
+        });
+
+      } catch (error) {
+
+        openRouterError =
+          error;
+
+        console.error(
+          "OpenRouter error:",
+          error?.message ||
+          error
+        );
+      }
+    }
+
+
+    // -----------------------------------------------------
+    // THIRD: GEMINI FALLBACK
+    // -----------------------------------------------------
+
+    if (
+      process.env.GEMINI_API_KEY
+    ) {
+
+      try {
+
+        const answer =
+          await callGemini(
+            messages
+          );
+
+        return res.status(200).json({
+          text: answer,
+          provider: "gemini-fallback",
+        });
+
+      } catch (error) {
+
+        console.error(
+          "Gemini fallback error:",
+          error?.message ||
+          error
+        );
+      }
+    }
+
+
+    // -----------------------------------------------------
+    // FRIENDLY FALLBACK
+    // -----------------------------------------------------
+
+    return res.status(200).json({
+
+      text:
+        `**AI analysis is temporarily unavailable.**
+
+The available AI provider has reached its current usage limit or is unavailable.
+
+You can still ask basic EGO questions such as:
+
+- Sub-goal duration
+- Clip Export duration
+- Idle rules
+- Collector Issue rules
+- Timeline continuity
+
+Please try AI/screenshot analysis again later.`,
+
+      provider: "fallback",
+    });
+
+
   } catch (error) {
-    return res.status(500).json({ error: error.message || 'Unexpected server error.' });
+
+    console.error(
+      "EGO API error:",
+      error?.stack ||
+      error?.message ||
+      error
+    );
+
+    return res.status(500).json({
+
+      error:
+        "Unable to contact the EGO assistant right now. Please try again.",
+
+    });
   }
 }
