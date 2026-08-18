@@ -1,145 +1,567 @@
+// ============================================================
+// EGO PHYSICAL AI ANNOTATION ASSISTANT
+// Current SOP: 2026/08/17
+//
+// IMPORTANT:
+// This file contains the current Approved and Forbidden Verb
+// Lists directly from the EGO SOP.
+//
+// Local deterministic checks take priority over AI responses.
+// ============================================================
+
+
+// ============================================================
+// CURRENT EGO SOP
+// ============================================================
+
 const EGO_SYSTEM_PROMPT = `
-You are the EGO / Physical AI Annotation Assistant and Quality Reviewer.
+You are the EGO / Physical AI Video Annotation Assistant and Quality Reviewer.
 
-IMPORTANT:
-The latest EGO Physical AI Video Annotation & Labeling SOP provided by the user is the single source of truth.
+SOURCE OF TRUTH:
+The EGO Physical AI Video Annotation & Labeling SOP supplied below is the current and authoritative specification.
 
-Never invent EGO rules.
+Do not invent rules.
+Do not use older EGO rules when they conflict with this SOP.
+Do not override the Approved or Forbidden Verb Lists.
 If the SOP does not provide enough information, say that the information is insufficient.
 
-PROJECT GOAL:
-Ensure every video is correctly clipped, correctly captioned, properly segmented, complete, and free of unintended gaps, overlaps, and Red Linter Errors.
+CURRENT SOP RULES:
 
-SUB-GOAL RULES:
+1. CLIP EXPORT
+- Maximum duration: 300 seconds.
+- Tasks longer than 300 seconds must be split into logical segments.
+- Clip Export must align with the first and last Sub-goals.
+
+2. SUB-GOAL
 - Minimum duration: 1.00 second.
 - Maximum duration: 9.99 seconds.
+- Must strictly be under 10 seconds.
 - Normally use one verb per Sub-goal.
-- Never create a Sub-goal of 10.00 seconds or longer.
-- Multiple actions are allowed only under approved SOP exceptions.
 
-CLIP EXPORT:
-- Maximum duration: 300 seconds / 5 minutes / 4:59.
-- Longer tasks must be split logically.
-- First Sub-goal aligns with the beginning of the Clip Export.
-- Final Sub-goal aligns with the end of the Clip Export.
+3. BOUNDARIES
+- Start where the body or hand begins moving toward the target object/action.
+- End when physical contact is broken.
+- Bounding within 5 frames of exact contact/release is acceptable.
+- Pouring starts when the container begins tilting.
+- Pouring ends when liquid stops flowing and the container returns upright.
 
-SUB-GOAL BOUNDARIES:
-- Start when the body or hand begins moving toward the target object/action.
-- End when physical contact is broken between hand/object or object/object.
-- A boundary within 5 frames of the exact contact/release point is acceptable.
+4. MERGING
+Up to 3 micro-actions may be combined only when:
+- The resulting Sub-goal would otherwise be less than 1 second, OR
+- The actions are dependent on one another.
 
-POURING:
-- Start when the container begins tilting to initiate the pour.
-- End when liquid stops flowing and the container returns upright.
+Do not combine unrelated actions simply because they occur close together.
 
-TIMELINE:
+5. PICK AND PLACE
+When an object is picked up and set down consecutively:
+"Pick up [Object] and put [Object] on [Destination]"
+
+6. IDLE
+- Idle is its own Sub-goal.
+- Caption strictly as "Idle".
+- Never merge Idle with active manipulation.
+- Idle periods longer than 5 seconds should be split into multiple short Idle Sub-goals.
+
+7. TIMELINE
 - No unintended gaps.
 - No unintended overlaps.
-- If one Sub-goal ends at frame 22, the next starts at frame 22 or 23.
+- If Sub-goal A ends at frame 22, Sub-goal B starts at frame 22 or 23.
+- First Sub-goal starts with Clip Export.
+- Last Sub-goal ends with Clip Export.
 
-IDLE:
-- Idle must be its own Sub-goal.
-- Caption exactly: Idle.
-- Do not merge Idle with active manipulation.
-- Idle periods longer than 5 seconds should be split into multiple valid Sub-goals.
+8. CAPTIONS
+- Use imperative mood.
+- Sub-goal captions normally contain one verb.
+- "and" is only permitted for approved grouped actions.
+- "while" is not allowed.
+- Adverbs cannot be used to differentiate repeated captions.
 
-CAPTIONING:
-Use imperative/action-oriented wording.
+9. IDENTICAL SUB-GOALS
+The same Sub-goal description cannot be used more than 3 consecutive times.
+The fourth must contain a meaningful distinction visible in the scene.
 
-Examples:
-- Pick up the mug.
-- Wipe the counter.
-- Put the plate on the table.
+10. OBJECT NAMING
+- 1 object: plain object name.
+- 2–3 similar objects: minimum distinguishing feature.
+- 4+ identical objects: use an indefinite descriptor when appropriate.
+- Use generic names instead of brand names.
 
-Normally use one verb per Sub-goal.
+11. SPATIAL REFERENCES
+- Left/right/top/bottom use the camera wearer's perspective.
+- Object-centric directions are used only for small handled objects or garments with named features.
 
-Use "and" only for actions permitted to be combined by the SOP.
+12. CLIP EXPORT CAPTIONS
+- 1–2 sentences maximum.
+- Mention the physical location or surface.
+- Do not include hand specifications.
 
-PICK-AND-PLACE:
-When permitted:
-Pick up [Object] and put [Object] on [Destination].
+IMPORTANT:
+Collector Issue annotation was REMOVED in the 2026/08/17 update.
+Do NOT instruct annotators to create Collector Issue annotations.
 
-OBJECT NAMING:
-Use the minimum necessary distinguishing information.
-Prefer generic object names instead of brand names.
-
-SPATIAL REFERENCES:
-Left/right/top/bottom refer to the camera wearer's perspective.
-Use object-centric references only when appropriate for handled objects or garments.
-
-COLLECTOR ISSUE:
-Use:
-Collector Quality Issue: Inactive Time
-
-CONSECUTIVE IDENTICAL SUB-GOALS:
-Do not use the exact same Sub-goal description more than 3 consecutive times.
-The fourth must contain a meaningful distinction that is actually visible.
-
-QUALITY REVIEW:
-Check:
-1. Action match
-2. Object match
-3. Boundary match
-4. Duration
-5. Verb count
-6. Approved/forbidden verb compliance
-7. Object naming
-8. Spatial references
-9. Timeline continuity
-10. Linter errors
-
-RESPONSE FORMAT:
-Give the direct answer first.
-
-When reviewing an annotation:
-
-Verdict: Correct / Incorrect / Needs Adjustment
-
-Reason:
-[Explain the applicable EGO rule.]
-
-Correction:
-[Give the corrected caption or boundary when necessary.]
-
-IMAGE / SCREENSHOT ANALYSIS:
-When an image is provided:
-- Identify the physical action actually visible.
-- Recommend an EGO-compliant caption.
-- Check the verb.
-- Check the object name.
-- Explain uncertainty if the image is ambiguous.
-- Never invent an action that cannot be supported by the image.
-- A screenshot cannot reliably establish exact start/end frames.
-- A screenshot cannot reliably establish exact duration.
-
-APPROVED AND FORBIDDEN VERBS:
-Use ONLY the latest approved/forbidden verb lists supplied by the current EGO SOP.
-Do not assume a verb is approved simply because it sounds natural.
-
-When a user asks whether a verb is approved or forbidden, clearly state the result and explain the applicable SOP rule.
-
-Be concise, practical, and strict.
+When reviewing a verb, use the exact Approved and Forbidden Verb Lists below.
 `;
 
 
-// ---------------------------------------------------------
-// LOCAL EGO RULES
-// These answers do not consume an AI request.
-// ---------------------------------------------------------
+// ============================================================
+// CURRENT APPROVED VERB LIST
+// SOURCE: USER-PROVIDED SOP 2026/08/17
+// ============================================================
+
+const APPROVED_VERBS = new Set([
+  "adjust",
+  "agitate",
+  "align",
+  "apply",
+  "arrange",
+  "assemble",
+  "attach",
+  "bend",
+  "bind",
+  "blow",
+  "break",
+  "breakdown",
+  "brush",
+  "buckle",
+  "button",
+  "cap",
+  "carve",
+  "change",
+  "clean",
+  "clip",
+  "close",
+  "coat",
+  "coil",
+  "comb",
+  "combine",
+  "compress",
+  "condition",
+  "connect",
+  "cook",
+  "count",
+  "crack",
+  "crease",
+  "crimp",
+  "crochet",
+  "crumple",
+  "crush",
+  "cut",
+  "dab",
+  "deal",
+  "disassemble",
+  "dispense",
+  "divide",
+  "drag",
+  "drain",
+  "draw",
+  "drip",
+  "drop",
+  "dump",
+  "embroider",
+  "erase",
+  "exchange",
+  "expand",
+  "fasten",
+  "fetch",
+  "fill",
+  "find",
+  "fix",
+  "flat",
+  "flatten",
+  "flick",
+  "flip",
+  "fluff",
+  "fold",
+  "form",
+  "fry",
+  "gather",
+  "get",
+  "glue",
+  "grab",
+  "grasp",
+  "grip",
+  "guide",
+  "hammer",
+  "hand off",
+  "hang",
+  "hold",
+  "hook",
+  "hover",
+  "idle",
+  "immerse",
+  "inflate",
+  "insert",
+  "inspect",
+  "install",
+  "iron",
+  "knead",
+  "knit",
+  "label",
+  "lace",
+  "lay",
+  "level",
+  "lift",
+  "light",
+  "link",
+  "load",
+  "loose",
+  "make",
+  "measure",
+  "merge",
+  "mix",
+  "model",
+  "modify",
+  "mold",
+  "mop",
+  "move",
+  "navigate",
+  "off",
+  "open",
+  "organize",
+  "paint",
+  "paste",
+  "peel",
+  "pick up",
+  "pin",
+  "pinch",
+  "place",
+  "plug",
+  "poke",
+  "position",
+  "pour",
+  "prepare",
+  "press",
+  "pry",
+  "pull",
+  "pump",
+  "punch",
+  "push",
+  "reach",
+  "regrasp",
+  "reinstall",
+  "remove",
+  "repair",
+  "reposition",
+  "retrieve",
+  "return",
+  "reverse",
+  "rinse",
+  "roll",
+  "rotate",
+  "rub",
+  "rummage",
+  "saw",
+  "scatter",
+  "scramble",
+  "scrape",
+  "scratch",
+  "screw",
+  "scrub",
+  "sculpt",
+  "search",
+  "seal",
+  "seat",
+  "secure",
+  "separate",
+  "set",
+  "sew",
+  "shake",
+  "shape",
+  "sharpen",
+  "shift",
+  "shook",
+  "shred",
+  "shuffle",
+  "slice",
+  "slide",
+  "slip",
+  "smash",
+  "smear",
+  "smooth",
+  "snap",
+  "soak",
+  "sort",
+  "split",
+  "spray",
+  "spread",
+  "squeeze",
+  "stack",
+  "steady",
+  "stick",
+  "stir",
+  "stitch",
+  "straighten",
+  "stretch",
+  "string",
+  "strip",
+  "sweep",
+  "swing",
+  "swivel",
+  "take",
+  "tap",
+  "tape",
+  "tear",
+  "test",
+  "thread",
+  "throw",
+  "tie",
+  "tighten",
+  "tilt",
+  "touch",
+  "trace",
+  "transfer",
+  "tuck",
+  "turn off",
+  "turn on",
+  "turn",
+  "twist",
+  "unbutton",
+  "unclamp",
+  "unclip",
+  "unclog",
+  "uncoil",
+  "uncrumple",
+  "unfold",
+  "unhang",
+  "unlink",
+  "unlock",
+  "unplug",
+  "unroll",
+  "unscrew",
+  "unseal",
+  "unstack",
+  "unstick",
+  "untangle",
+  "untie",
+  "unwrap",
+  "unzip",
+  "vacuum",
+  "walk",
+  "wash",
+  "wedge",
+  "wet",
+  "wipe",
+  "wring",
+  "write",
+  "zip"
+]);
+
+
+// ============================================================
+// CURRENT FORBIDDEN VERB LIST
+// SOURCE: USER-PROVIDED SOP 2026/08/17
+// ============================================================
+
+const FORBIDDEN_VERBS = new Set([
+  "analyze",
+  "assess",
+  "browse",
+  "check",
+  "choose",
+  "compare",
+  "confirm",
+  "detail",
+  "disengage",
+  "ensure",
+  "examine",
+  "fine tune",
+  "finesse",
+  "group",
+  "look",
+  "match",
+  "observe",
+  "portion",
+  "reach for",
+  "refine",
+  "review",
+  "select",
+  "survey",
+  "tune",
+  "verify",
+  "view",
+  "weigh",
+  "begin",
+  "complete",
+  "continue",
+  "finalize",
+  "finish",
+  "first",
+  "initiate",
+  "maintain",
+  "rearrange",
+  "start",
+  "handle",
+  "manipulate",
+  "pace",
+  "perform",
+  "section",
+  "work",
+  "additional",
+  "again",
+  "another",
+  "current",
+  "extra",
+  "final",
+  "further",
+  "more",
+  "new",
+  "old",
+  "other",
+  "remaining",
+  "specific"
+]);
+
+
+// ============================================================
+// VERB NORMALIZATION
+// ============================================================
+
+function normalizeVerb(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[.,!?;:"'`]/g, "")
+    .replace(/\s+/g, " ");
+}
+
+
+// ============================================================
+// CHECK A SINGLE VERB
+// ============================================================
+
+function checkVerb(verb) {
+  const normalized = normalizeVerb(verb);
+
+  if (!normalized) {
+    return {
+      status: "unknown",
+      verb: "",
+      message: "No verb was provided."
+    };
+  }
+
+  if (APPROVED_VERBS.has(normalized)) {
+    return {
+      status: "approved",
+      verb: normalized,
+      message: `**${verb}** is an **APPROVED** EGO verb.`
+    };
+  }
+
+  if (FORBIDDEN_VERBS.has(normalized)) {
+    return {
+      status: "forbidden",
+      verb: normalized,
+      message: `**${verb}** is a **FORBIDDEN** EGO verb.`
+    };
+  }
+
+  return {
+    status: "unknown",
+    verb: normalized,
+    message:
+      `**${verb}** is **not found in the current Approved or Forbidden Verb List**. ` +
+      `Do not assume it is approved.`
+  };
+}
+
+
+// ============================================================
+// FIND WHETHER USER IS ASKING ABOUT A VERB
+// ============================================================
+
+function extractVerbFromQuestion(question) {
+  const text = String(question || "").trim();
+
+  const patterns = [
+    /is\s+["'`]?([^"'`?]+?)["'`]?\s+(?:an\s+)?approved\s+verb/i,
+    /is\s+["'`]?([^"'`?]+?)["'`]?\s+(?:a\s+)?forbidden\s+verb/i,
+    /["'`]([^"'`]+)["'`]\s+(?:an\s+)?approved\s+verb/i,
+    /["'`]([^"'`]+)["'`]\s+(?:a\s+)?forbidden\s+verb/i,
+    /(?:approved|forbidden)\s+verb\s*[:\-]?\s*["'`]?([^"'`?]+)["'`]?$/i
+  ];
+
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+
+    if (match && match[1]) {
+      return match[1].trim();
+    }
+  }
+
+  return null;
+}
+
+
+// ============================================================
+// LOCAL VERB RESPONSE
+// ============================================================
+
+function localVerbAnswer(question) {
+  const verb = extractVerbFromQuestion(question);
+
+  if (!verb) {
+    return null;
+  }
+
+  const result = checkVerb(verb);
+
+  if (result.status === "approved") {
+    return {
+      text:
+        `### Verdict: Approved ✅\n\n` +
+        `**${verb}** is explicitly listed in the current EGO **Approved Verb List**.\n\n` +
+        `Use it when the physical action shown in the video matches the verb.`,
+      provider: "local-ego-verb-checker"
+    };
+  }
+
+  if (result.status === "forbidden") {
+    return {
+      text:
+        `### Verdict: Forbidden ❌\n\n` +
+        `**${verb}** is explicitly listed in the current EGO **Forbidden Verb List**.\n\n` +
+        `Use an appropriate approved verb that accurately describes the visible physical action.`,
+      provider: "local-ego-verb-checker"
+    };
+  }
+
+  return {
+    text:
+      `### Verdict: Not specified ⚠️\n\n` +
+      `**${verb}** does not appear in the current Approved or Forbidden Verb List provided in the EGO SOP.\n\n` +
+      `Do not assume that it is approved. The caption should be reviewed against the current SOP.`,
+    provider: "local-ego-verb-checker"
+  };
+}
+
+
+// ============================================================
+// LOCAL BASIC EGO RULES
+// ============================================================
 
 function localEgoAnswer(question) {
   const q = String(question || "").toLowerCase().trim();
+
+  // Do not use this for verb questions.
+  if (extractVerbFromQuestion(question)) {
+    return null;
+  }
 
   if (
     q.includes("sub-goal duration") ||
     q.includes("subgoal duration") ||
     q.includes("sub-goal maximum") ||
     q.includes("subgoal maximum") ||
-    q.includes("how long can a sub-goal")
+    q.includes("how long can a sub-goal") ||
+    q.includes("how long can a subgoal")
   ) {
-    return `**Answer:** A Sub-goal must be **1.00–9.99 seconds**.
-
-A Sub-goal must never be 10.00 seconds or longer.`;
+    return {
+      text:
+        `**Answer:** A Sub-goal must be **1.00–9.99 seconds**.\n\n` +
+        `It must be at least 1.00 second and strictly under 10.00 seconds.`,
+      provider: "local-ego-rules"
+    };
   }
 
   if (
@@ -151,20 +573,25 @@ A Sub-goal must never be 10.00 seconds or longer.`;
       q.includes("how long")
     )
   ) {
-    return `**Answer:** A Clip Export has a maximum duration of **300 seconds (5 minutes / 4:59)**.
-
-If the task is longer than 300 seconds, it must be split into logical segments.`;
+    return {
+      text:
+        `**Answer:** A Clip Export has a maximum duration of **300 seconds**.\n\n` +
+        `Tasks longer than 300 seconds must be split into logical segments aligned with Sub-goals.`,
+      provider: "local-ego-rules"
+    };
   }
 
   if (
     q.includes("collector issue") ||
     q.includes("collector quality issue")
   ) {
-    return `**Answer:** Use:
-
-**Collector Quality Issue: Inactive Time**
-
-This applies to non-contributing time such as camera adjustment, resting, or inactive recording periods.`;
+    return {
+      text:
+        `### Current SOP Update\n\n` +
+        `**Collector Issue annotation was removed in the 2026/08/17 SOP update.**\n\n` +
+        `Do not create a Collector Issue annotation under the current SOP.`,
+      provider: "local-ego-rules"
+    };
   }
 
   if (
@@ -176,11 +603,13 @@ This applies to non-contributing time such as camera adjustment, resting, or ina
       q.includes("how do")
     )
   ) {
-    return `**Answer:** Idle must be its own Sub-goal.
-
-**Caption:** \`Idle\`
-
-Do not merge Idle with an active manipulation Sub-goal.`;
+    return {
+      text:
+        `**Answer:** Idle must be its own Sub-goal.\n\n` +
+        `**Caption:** \`Idle\`\n\n` +
+        `Never merge Idle into an active manipulation Sub-goal.`,
+      provider: "local-ego-rules"
+    };
   }
 
   if (
@@ -188,46 +617,87 @@ Do not merge Idle with an active manipulation Sub-goal.`;
     q.includes("timeline gap") ||
     q.includes("timeline overlap")
   ) {
-    return `**Answer:** Sub-goals should have no unintended gaps or overlaps.
-
-If Sub-goal A ends at frame 22, Sub-goal B should start at frame 22 or frame 23.`;
+    return {
+      text:
+        `**Answer:** Sub-goals must have no unintended gaps or overlaps.\n\n` +
+        `If Sub-goal A ends at frame 22, Sub-goal B can start at frame 22 or frame 23.`,
+      provider: "local-ego-rules"
+    };
   }
 
   if (
-    q.includes("screenshot") &&
+    q.includes("adverb") &&
     (
-      q.includes("duration") ||
-      q.includes("frame") ||
-      q.includes("boundary")
+      q.includes("caption") ||
+      q.includes("different") ||
+      q.includes("differentiate")
     )
   ) {
-    return `**Answer:** A screenshot can help identify the visible action, but it cannot reliably establish exact Sub-goal start/end frames or duration.
+    return {
+      text:
+        `**Answer:** Adverbs cannot be used to differentiate consecutive identical Sub-goal captions.\n\n` +
+        `The distinction must describe an actual visible difference in the action or scene.`,
+      provider: "local-ego-rules"
+    };
+  }
 
-Use the video timeline for exact boundary and duration checks.`;
+  if (
+    q.includes("same sub-goal") ||
+    q.includes("same subgoal") ||
+    q.includes("identical sub-goal") ||
+    q.includes("identical subgoal")
+  ) {
+    return {
+      text:
+        `**Answer:** The same Sub-goal description cannot be used more than **3 consecutive times**.\n\n` +
+        `The fourth must contain a meaningful distinction based on what is actually visible.`,
+      provider: "local-ego-rules"
+    };
+  }
+
+  if (
+    q.includes("same frame") &&
+    (
+      q.includes("sub-goal") ||
+      q.includes("subgoal")
+    )
+  ) {
+    return {
+      text:
+        `**Answer:** Yes. The next Sub-goal can start at the **same frame or +1 frame**.\n\n` +
+        `For example, if Sub-goal A ends at frame 22, Sub-goal B can start at frame 22 or 23.`,
+      provider: "local-ego-rules"
+    };
+  }
+
+  if (
+    q.includes("collector") &&
+    q.includes("2026/08/17")
+  ) {
+    return {
+      text:
+        `**Answer:** The 2026/08/17 update removed the need to annotate Collector Issues.`,
+      provider: "local-ego-rules"
+    };
   }
 
   return null;
 }
 
 
-// ---------------------------------------------------------
-// HELPERS
-// ---------------------------------------------------------
-
-function extractText(data) {
-  return (
-    data?.choices?.[0]?.message?.content ||
-    data?.choices?.[0]?.text ||
-    ""
-  );
-}
-
+// ============================================================
+// IMAGE DETECTION
+// ============================================================
 
 function containsImage(messages) {
   return messages.some((message) => {
-    if (!Array.isArray(message?.content)) return false;
+
+    if (!Array.isArray(message?.content)) {
+      return false;
+    }
 
     return message.content.some((part) => {
+
       return (
         part?.type === "image_url" ||
         part?.type === "input_image"
@@ -237,32 +707,38 @@ function containsImage(messages) {
 }
 
 
+// ============================================================
+// NORMALIZE MESSAGES FOR OPENROUTER
+// ============================================================
+
 function normalizeMessages(messages) {
+
   return messages.map((message) => {
+
     if (!Array.isArray(message.content)) {
       return {
         role: message.role,
-        content: message.content,
+        content: message.content
       };
     }
 
     const content = message.content.map((part) => {
 
-      // Standard OpenAI/OpenRouter image format
       if (part.type === "image_url") {
         return {
           type: "image_url",
-          image_url: part.image_url,
+          image_url: part.image_url
         };
       }
 
-      // Convert input_image to image_url
       if (part.type === "input_image") {
         return {
           type: "image_url",
           image_url: {
-            url: part.image_url || part.url,
-          },
+            url:
+              part.image_url ||
+              part.url
+          }
         };
       }
 
@@ -272,7 +748,7 @@ function normalizeMessages(messages) {
       ) {
         return {
           type: "text",
-          text: part.text || "",
+          text: part.text || ""
         };
       }
 
@@ -281,24 +757,29 @@ function normalizeMessages(messages) {
 
     return {
       role: message.role,
-      content,
+      content
     };
   });
 }
 
 
-// ---------------------------------------------------------
+// ============================================================
 // OPENROUTER
-// ---------------------------------------------------------
+// ============================================================
 
 async function callOpenRouter(messages) {
-  const apiKey = process.env.OPENROUTER_API_KEY;
+
+  const apiKey =
+    process.env.OPENROUTER_API_KEY;
 
   if (!apiKey) {
-    throw new Error("OPENROUTER_API_KEY is not configured.");
+    throw new Error(
+      "OPENROUTER_API_KEY is not configured."
+    );
   }
 
-  const normalizedMessages = normalizeMessages(messages);
+  const normalizedMessages =
+    normalizeMessages(messages);
 
   const response = await fetch(
     "https://openrouter.ai/api/v1/chat/completions",
@@ -306,7 +787,7 @@ async function callOpenRouter(messages) {
       method: "POST",
 
       headers: {
-        "Authorization": `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
 
         "HTTP-Referer":
@@ -314,28 +795,30 @@ async function callOpenRouter(messages) {
           "https://ego-chatbot-1.vercel.app",
 
         "X-Title":
-          "EGO Physical AI Annotation Assistant",
+          "EGO Physical AI Annotation Assistant"
       },
 
       body: JSON.stringify({
+
         model: "openrouter/free",
 
         messages: [
           {
             role: "system",
-            content: EGO_SYSTEM_PROMPT,
+            content: EGO_SYSTEM_PROMPT
           },
-          ...normalizedMessages,
+          ...normalizedMessages
         ],
 
-        temperature: 0.2,
+        temperature: 0.1,
 
-        max_tokens: 1500,
-      }),
+        max_tokens: 1500
+      })
     }
   );
 
-  const data = await response.json();
+  const data =
+    await response.json();
 
   if (!response.ok) {
     throw new Error(
@@ -344,7 +827,9 @@ async function callOpenRouter(messages) {
     );
   }
 
-  const text = extractText(data);
+  const text =
+    data?.choices?.[0]?.message?.content ||
+    "";
 
   if (!text) {
     throw new Error(
@@ -356,12 +841,14 @@ async function callOpenRouter(messages) {
 }
 
 
-// ---------------------------------------------------------
+// ============================================================
 // GEMINI FALLBACK
-// ---------------------------------------------------------
+// ============================================================
 
 async function callGemini(messages) {
-  const apiKey = process.env.GEMINI_API_KEY;
+
+  const apiKey =
+    process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
     throw new Error(
@@ -369,99 +856,111 @@ async function callGemini(messages) {
     );
   }
 
-  const contents = messages.map((message) => {
-    const parts = [];
+  const contents =
+    messages.map((message) => {
 
-    if (Array.isArray(message.content)) {
+      const parts = [];
 
-      for (const part of message.content) {
+      if (Array.isArray(message.content)) {
 
-        if (
-          part.type === "text" ||
-          part.type === "input_text"
+        for (
+          const part of message.content
         ) {
-          parts.push({
-            text: part.text || "",
-          });
-        }
 
-        if (
-          part.type === "image_url" ||
-          part.type === "input_image"
-        ) {
-          const imageUrl =
-            part.image_url?.url ||
-            part.image_url ||
-            part.url ||
-            "";
-
-          const match = imageUrl.match(
-            /^data:(image\/[^;]+);base64,(.+)$/
-          );
-
-          if (match) {
+          if (
+            part.type === "text" ||
+            part.type === "input_text"
+          ) {
             parts.push({
-              inline_data: {
-                mime_type: match[1],
-                data: match[2],
-              },
+              text: part.text || ""
             });
           }
+
+          if (
+            part.type === "image_url" ||
+            part.type === "input_image"
+          ) {
+
+            const imageUrl =
+              part.image_url?.url ||
+              part.image_url ||
+              part.url ||
+              "";
+
+            const match =
+              imageUrl.match(
+                /^data:(image\/[^;]+);base64,(.+)$/
+              );
+
+            if (match) {
+
+              parts.push({
+                inline_data: {
+                  mime_type: match[1],
+                  data: match[2]
+                }
+              });
+            }
+          }
         }
+
+      } else if (
+        typeof message.content === "string"
+      ) {
+
+        parts.push({
+          text: message.content
+        });
       }
 
-    } else if (
-      typeof message.content === "string"
-    ) {
+      return {
+        role:
+          message.role === "assistant"
+            ? "model"
+            : "user",
 
-      parts.push({
-        text: message.content,
-      });
-    }
+        parts
+      };
+    });
 
-    return {
-      role:
-        message.role === "assistant"
-          ? "model"
-          : "user",
+  const response =
+    await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=" +
+        encodeURIComponent(apiKey),
+      {
+        method: "POST",
 
-      parts,
-    };
-  });
-
-  const response = await fetch(
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=" +
-      encodeURIComponent(apiKey),
-
-    {
-      method: "POST",
-
-      headers: {
-        "Content-Type": "application/json",
-      },
-
-      body: JSON.stringify({
-        systemInstruction: {
-          parts: [
-            {
-              text: EGO_SYSTEM_PROMPT,
-            },
-          ],
+        headers: {
+          "Content-Type":
+            "application/json"
         },
 
-        contents,
+        body: JSON.stringify({
 
-        generationConfig: {
-          temperature: 0.2,
-          maxOutputTokens: 1500,
-        },
-      }),
-    }
-  );
+          systemInstruction: {
+            parts: [
+              {
+                text:
+                  EGO_SYSTEM_PROMPT
+              }
+            ]
+          },
 
-  const data = await response.json();
+          contents,
+
+          generationConfig: {
+            temperature: 0.1,
+            maxOutputTokens: 1500
+          }
+        })
+      }
+    );
+
+  const data =
+    await response.json();
 
   if (!response.ok) {
+
     throw new Error(
       data?.error?.message ||
       `Gemini request failed (${response.status})`
@@ -470,7 +969,10 @@ async function callGemini(messages) {
 
   const text =
     data?.candidates?.[0]?.content?.parts
-      ?.map((part) => part.text || "")
+      ?.map(
+        (part) =>
+          part.text || ""
+      )
       .join("") || "";
 
   if (!text) {
@@ -483,21 +985,71 @@ async function callGemini(messages) {
 }
 
 
-// ---------------------------------------------------------
-// MAIN API HANDLER
-// ---------------------------------------------------------
+// ============================================================
+// EXTRACT LATEST USER TEXT
+// ============================================================
 
-export default async function handler(req, res) {
+function getLatestUserText(messages) {
+
+  const latest =
+    [...messages]
+      .reverse()
+      .find(
+        (message) =>
+          message.role === "user"
+      );
+
+  if (!latest) {
+    return "";
+  }
+
+  if (
+    typeof latest.content === "string"
+  ) {
+    return latest.content;
+  }
+
+  if (
+    Array.isArray(latest.content)
+  ) {
+
+    return latest.content
+      .filter(
+        (part) =>
+          part.type === "text" ||
+          part.type === "input_text"
+      )
+      .map(
+        (part) =>
+          part.text || ""
+      )
+      .join(" ");
+  }
+
+  return "";
+}
+
+
+// ============================================================
+// MAIN API HANDLER
+// ============================================================
+
+export default async function handler(
+  req,
+  res
+) {
 
   if (req.method !== "POST") {
+
     return res.status(405).json({
-      error: "Method not allowed",
+      error: "Method not allowed"
     });
   }
 
   try {
 
-    const body = req.body || {};
+    const body =
+      req.body || {};
 
     const messages =
       Array.isArray(body.messages)
@@ -505,62 +1057,43 @@ export default async function handler(req, res) {
         : [];
 
     if (!messages.length) {
+
       return res.status(400).json({
-        error: "No messages provided.",
+        error:
+          "No messages provided."
       });
     }
 
-
-    // Find latest user message
-    const latestUserMessage =
-      [...messages]
-        .reverse()
-        .find(
-          (message) =>
-            message.role === "user"
-        );
-
-
-    let question = "";
-
-    if (latestUserMessage) {
-
-      if (
-        typeof latestUserMessage.content ===
-        "string"
-      ) {
-        question =
-          latestUserMessage.content;
-      }
-
-      if (
-        Array.isArray(
-          latestUserMessage.content
-        )
-      ) {
-        question =
-          latestUserMessage.content
-            .filter(
-              (part) =>
-                part.type === "text" ||
-                part.type === "input_text"
-            )
-            .map(
-              (part) =>
-                part.text || ""
-            )
-            .join(" ");
-      }
-    }
-
+    const question =
+      getLatestUserText(messages);
 
     const hasImage =
       containsImage(messages);
 
 
-    // -----------------------------------------------------
-    // FIRST: LOCAL RULE ENGINE
-    // -----------------------------------------------------
+    // ========================================================
+    // PRIORITY 1:
+    // EXACT LOCAL VERB CHECK
+    // ========================================================
+
+    if (!hasImage) {
+
+      const verbAnswer =
+        localVerbAnswer(question);
+
+      if (verbAnswer) {
+
+        return res.status(200).json(
+          verbAnswer
+        );
+      }
+    }
+
+
+    // ========================================================
+    // PRIORITY 2:
+    // LOCAL SOP RULES
+    // ========================================================
 
     if (!hasImage) {
 
@@ -569,19 +1102,17 @@ export default async function handler(req, res) {
 
       if (localAnswer) {
 
-        return res.status(200).json({
-          text: localAnswer,
-          provider: "local-ego-rules",
-        });
+        return res.status(200).json(
+          localAnswer
+        );
       }
     }
 
 
-    // -----------------------------------------------------
-    // SECOND: OPENROUTER
-    // -----------------------------------------------------
-
-    let openRouterError = null;
+    // ========================================================
+    // PRIORITY 3:
+    // OPENROUTER
+    // ========================================================
 
     if (
       process.env.OPENROUTER_API_KEY
@@ -595,14 +1126,14 @@ export default async function handler(req, res) {
           );
 
         return res.status(200).json({
+
           text: answer,
-          provider: "openrouter",
+
+          provider:
+            "openrouter"
         });
 
       } catch (error) {
-
-        openRouterError =
-          error;
 
         console.error(
           "OpenRouter error:",
@@ -613,9 +1144,10 @@ export default async function handler(req, res) {
     }
 
 
-    // -----------------------------------------------------
-    // THIRD: GEMINI FALLBACK
-    // -----------------------------------------------------
+    // ========================================================
+    // PRIORITY 4:
+    // GEMINI FALLBACK
+    // ========================================================
 
     if (
       process.env.GEMINI_API_KEY
@@ -629,8 +1161,11 @@ export default async function handler(req, res) {
           );
 
         return res.status(200).json({
+
           text: answer,
-          provider: "gemini-fallback",
+
+          provider:
+            "gemini-fallback"
         });
 
       } catch (error) {
@@ -644,30 +1179,20 @@ export default async function handler(req, res) {
     }
 
 
-    // -----------------------------------------------------
+    // ========================================================
     // FRIENDLY FALLBACK
-    // -----------------------------------------------------
+    // ========================================================
 
     return res.status(200).json({
 
       text:
-        `**AI analysis is temporarily unavailable.**
+        `### AI analysis is temporarily unavailable.\n\n` +
+        `The AI provider is currently unavailable or has reached its usage limit.\n\n` +
+        `Basic EGO SOP checks are still available.`,
 
-The available AI provider has reached its current usage limit or is unavailable.
-
-You can still ask basic EGO questions such as:
-
-- Sub-goal duration
-- Clip Export duration
-- Idle rules
-- Collector Issue rules
-- Timeline continuity
-
-Please try AI/screenshot analysis again later.`,
-
-      provider: "fallback",
+      provider:
+        "fallback"
     });
-
 
   } catch (error) {
 
@@ -681,8 +1206,7 @@ Please try AI/screenshot analysis again later.`,
     return res.status(500).json({
 
       error:
-        "Unable to contact the EGO assistant right now. Please try again.",
-
+        "Unable to contact the EGO assistant right now. Please try again."
     });
   }
 }
