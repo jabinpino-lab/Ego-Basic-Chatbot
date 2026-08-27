@@ -100,7 +100,7 @@ document.querySelectorAll('[data-q]').forEach(b=>b.addEventListener('click',()=>
 const quickMode=document.getElementById('quickMode'),deepMode=document.getElementById('deepMode');quickMode.onclick=()=>{deep=false;quickMode.classList.add('active');deepMode.classList.remove('active');input.placeholder='Ask anything about the EGO specification…'};deepMode.onclick=()=>{deep=true;deepMode.classList.add('active');quickMode.classList.remove('active');input.placeholder='Deep scan: ask for a rule, caption, timeline or evidence review…';showToast('Deep Spec Scan enabled')};
 document.getElementById('collapse').onclick=()=>{const sc=document.getElementById('sidecar');sc.style.display='none';showToast('Context panel collapsed')};
 document.querySelectorAll('.nav button[data-nav]').forEach(b=>b.onclick=()=>{document.querySelectorAll('.nav button[data-nav]').forEach(x=>x.classList.remove('active'));b.classList.add('active');showToast(b.textContent+' selected')});
-addMessage('AetherSpec is ready. Ask about the current EGO SOP, paste a caption, or attach a screenshot. I will keep answers source-bound and will not invent unsupported rules.','assistant');
+addMessage('Ego Basic Chatbot is ready. Ask about the current EGO SOP, paste a caption, or attach a screenshot. I will keep answers source-bound and will not invent unsupported rules.','assistant');
 </script>
 </body>
 </html>
