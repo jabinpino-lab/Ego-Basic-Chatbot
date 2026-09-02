@@ -1,6 +1,7 @@
-import fs from 'fs';
+const fs = require('fs');
+const path = require('path');
 
-const SOP_PATH = new URL('../docs/EGO_Physical_AI_Annotation_SOP.md', import.meta.url);
+const SOP_PATH = path.join(process.cwd(), 'docs', 'EGO_Physical_AI_Annotation_SOP.md');
 
 let EGO_SOP = '';
 try {
@@ -42,7 +43,7 @@ ${EGO_SOP}
 `;
 
 function json(res, status, body) {
-  res.status(status).setHeader('Content-Type', 'application/json');
+  res.status(status).setHeader('Content-Type', 'application/json; charset=utf-8');
   res.end(JSON.stringify(body));
 }
 
@@ -125,7 +126,7 @@ async function callOpenRouter(messages) {
   return typeof text === 'string' ? text : JSON.stringify(text);
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { error: 'Method not allowed.' });
 
   try {
@@ -148,4 +149,4 @@ export default async function handler(req, res) {
     console.error('EGO assistant error:', error);
     return json(res, 500, { error: error?.message || 'Assistant request failed.' });
   }
-}
+};
