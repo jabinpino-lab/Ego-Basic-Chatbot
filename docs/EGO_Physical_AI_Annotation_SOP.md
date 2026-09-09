@@ -49,7 +49,7 @@ This document defines the standard operating instructions for egocentric (first-
 #### Pick-and-Place Sequences
 
 - When an object is picked up and set down consecutively, both steps must be captured together in the description:
-  *`Pick up [Object] and put [Object] on [Destination] with [Hand(s) Used]`*
+  *`Pick up [Object] and put [Object] on [Destination]`*
 
 ### Idle Time
 
@@ -67,7 +67,7 @@ This document defines the standard operating instructions for egocentric (first-
 
 Captions translate video actions into clear machine descriptions. All captions must be written in the **imperative mood** (command form).
 
-> **Note:** Do NOT include hand specifications (e.g., "with the right hand", "with both hands", or "holding with the left hand") in Clip Exports.
+> **Note:** Do NOT include hand specifications in captions.
 
 ### A. Clip Export Captions
 
@@ -87,33 +87,34 @@ Syntax
 
 - There should be no special characters in the sub-goal captions (only letters and spaces are allowed)
 - Only the first letter of the first word (verb) should be capitalized in a subgoal caption
+- Do not include hand specifications in sub-goal captions
 
 #### Standard Formulas:
 
-1. **Standard Action:** `[Imperative Verb] + the [Object] (+ with [Tool]) + [Hand(s) Used]`
-2. **Placement Action:** `[Imperative Verb] + the [Object] + [Destination] + [Hand(s) Used]`
+1. **Standard Action:** `[Imperative Verb] + the [Object] (+ with [Tool])`
+2. **Placement Action:** `[Imperative Verb] + the [Object] + [Destination]`
 
 #### Examples:
 
-- *Standard Action:* `Cut the cucumber with the knife with the right hand`
-- *Standard Action with Tool:* `Wipe the door with a cloth with both hands`
-- *Placement Action:* `Put the mug on the counter with the left hand`
-- *Pick-and-Place:* `Pick up the mug and put the mug on the counter with the right hand`
+- *Standard Action:* `Cut the cucumber with the knife`
+- *Standard Action with Tool:* `Wipe the door with a cloth`
+- *Placement Action:* `Put the mug on the counter`
+- *Pick-and-Place:* `Pick up the mug and put the mug on the counter`
 
 **Consecutive identical subgoals** - We cannot annotate the same sub-goal description more than 5 times, after the third time there has to be a distinction.
-*For example*: If you're writing "Mop the left corner of the table with the left hand" three times, the fourth one needs to be different, you should observe the scene closely and indicate the difference in the action compared to the previous description, such as "Mop the inferior left corner of the table with the left hand"
+*For example*: If you're writing "Mop the left corner of the table" three times, the fourth one needs to be different, you should observe the scene closely and indicate the difference in the action compared to the previous description, such as "Mop the inferior left corner of the table"
 
 **Adverbs** (a word that modifies or describes a verb) are **not** an acceptable way to differentiate captions.
-*For example*: If you're writing "Mop the left corner of the table with the left hand" three times, the fourth one cannot be different by using an adverb such as: "Mop the left corner of the table carefully with the left hand"
+*For example*: If you're writing "Mop the left corner of the table" three times, the fourth one cannot be different by using an adverb such as: "Mop the left corner of the table carefully"
 **Level of Detail** - for differentiating consecutive subgoals, please use the same level of detail if you are already adjusting the captions
 
 ## 4C. Naming Objects & Spatial References
 
 ### Object Naming
 
-- **1 object in view:** Use the plain object name without extra descriptors (e.g., `Pick up the apple with the right hand`).
-- **2–3 similar objects:** Add the minimum distinguishing feature such as color or position (e.g., `Pick up the red pencil with the right hand`).
-- **4+ identical objects:** Use an indefinite descriptor (e.g., `Pick up a pencil with the right hand`).
+- **1 object in view:** Use the plain object name without extra descriptors (e.g., `Pick up the apple`).
+- **2–3 similar objects:** Add the minimum distinguishing feature such as color or position (e.g., `Pick up the red pencil`).
+- **4+ identical objects:** Use an indefinite descriptor (e.g., `Pick up a pencil`).
 - **Generic terminology:** Always use generic names rather than brand names (e.g., use `tablet` instead of `iPad`, `earphones` instead of `AirPods`).
 
 ### Directional Descriptors
@@ -130,7 +131,7 @@ Before submitting a finished task, complete this final review:
 - [ ] **Timeline Continuity:** Sub-goals align end-to-start without gaps or overlapping frames.
 - [ ] **Imperative Mood:** Captions start with imperative verbs (e.g., `Pick up`, `Wipe`, `Place`).
 - [ ] **Verb in Approved Verbs List (table below):** Captions start with a verb in the verb list below.
-- [ ] **Hands Identified:** Captions identify the hand(s) used to complete the sub-goal
+- [ ] **Hands Identified:** Hand specifications are not required in captions.
 - [ ] **Wording:** Please only use “and” when grouping actions together. “While” is not allowed. Sub-goal captions only use 1 verb unless it meets exception criteria described above.
 - [ ] **Linter Check:** Run Quality Assistant linters and resolve all **Red Errors**.
 
@@ -138,6 +139,7 @@ Before submitting a finished task, complete this final review:
 
 | Date | Change |
 | --- | --- |
+| 2026/09/04 | - Removed use of hands |
 | 2026/09/01 | - Added hands back into the spec<br>- Changed to max 5 identical consecutive sub-goals<br>- Added “carry” as an approved verb |
 | 2026/08/20 | - Added in best practices for repeated subgoals<br>- Added in no special characters/capitalize first verb only |
 | 2026/08/17 | - Removed the need to annotate “Collector Issue”<br>- Added in how to get to tooling/translation quick start videos<br>- Added in captions cannot be differentiated by adverbs |
@@ -166,7 +168,7 @@ When reviewing an annotation:
 5. Separate what is visibly supported by the video/image from what is required by the SOP.
 6. Never present a guess as an SOP requirement.
 7. A screenshot alone cannot establish exact timeline frame numbers or exact duration unless the relevant information is visible/provided.
-8. If reviewing a caption, check the approved verb, imperative mood, object match, one-verb rule and exceptions, special characters, capitalization, object naming, spatial references, and repeated-caption rules.
+8. If reviewing a caption, check the approved verb, imperative mood, object match, one-verb rule and exceptions, special characters, capitalization, object naming, spatial references, and repeated-caption rules. Do not require hand specifications.
 9. If reviewing boundaries, check movement start, physical-contact release end, pouring exception, duration, continuity, and Clip Export alignment.
 
 ## Final Priority
