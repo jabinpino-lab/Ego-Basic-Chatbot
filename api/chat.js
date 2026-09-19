@@ -83,7 +83,7 @@ async function callGemini(messages) {
     const parts = [];
     if (m.content) parts.push({ text: m.content });
     if (m.image) {
-      const match = m.image.match(/^data:(image\\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
+      const match = m.image.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
       if (match) parts.push({ inline_data: { mime_type: match[1], data: match[2] } });
     }
     return { role: m.role === 'assistant' ? 'model' : 'user', parts: parts.length ? parts : [{ text: '' }] };
